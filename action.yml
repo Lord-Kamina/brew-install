@@ -57,21 +57,23 @@ runs:
     - name: Restore cache
       id: cache
       if: inputs.cache == 'true' && steps.prep.outputs.cache-paths != ''
-      uses: actions/cache/restore@v4
+      uses: Lord-Kamina/always-upload-cache/restore@refresh-cache
       with:
         path: ${{ steps.prep.outputs.cache-paths }}
         key: brew-install-${{ hashFiles('.brew-install/packages.txt') }}-${{ hashFiles('.brew-install/cache-paths.txt') }}
         restore-keys: brew-install-${{ hashFiles('.brew-install/packages.txt') }}-
     - name: Install packages
+      id: install
       if: inputs.cache != 'true' || steps.prep.outputs.cache-paths != ''
       run: brew install ${{ steps.prep.outputs.flags }} -- ${{ steps.prep.outputs.packages }}
       shell: bash
     - name: Save cache
-      if: inputs.cache == 'true' && steps.prep.outputs.cache-paths != '' && steps.cache.outputs.cache-hit != 'true'
-      uses: actions/cache/save@v4
+      if: inputs.cache == 'true' && steps.prep.outputs.cache-paths != '' && steps.install.outcome == 'success'
+      uses: Lord-Kamina/always-upload-cache/save@refresh-cache
       with:
         path: ${{ steps.prep.outputs.cache-paths }}
         key: ${{ steps.cache.outputs.cache-primary-key }}
+        refresh-cache: 'true'
     - name: Clean up
       if: inputs.cache == 'true' && always()
       run: |
